@@ -313,9 +313,117 @@
     .month-text{font-size:19px;}
     .intro p, .closing p{font-size:20px;}
   }
+
+  body.locked{
+    overflow:hidden;
+  }
+
+  #lock-overlay{
+    position:fixed;
+    inset:0;
+    z-index:1000;
+    background:linear-gradient(180deg, var(--blush) 0%, var(--cream) 85%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+  }
+
+  #lock-overlay.hidden{
+    display:none;
+  }
+
+  .lock-card{
+    max-width:340px;
+    width:100%;
+    text-align:center;
+    background:rgba(255,255,255,0.5);
+    border:1px solid rgba(201,166,104,0.4);
+    border-radius:16px;
+    padding:44px 30px;
+    box-shadow:0 10px 30px rgba(74,59,59,0.12);
+  }
+
+  .lock-heart{
+    font-size:30px;
+    color:var(--rose);
+    margin-bottom:14px;
+  }
+
+  .lock-card h2{
+    font-family:'Dancing Script', cursive;
+    font-size:38px;
+    color:var(--rose-deep);
+    margin:0 0 6px 0;
+    font-weight:700;
+  }
+
+  .lock-card p{
+    font-family:'Cormorant Garamond', serif;
+    font-size:17px;
+    color:var(--ink-soft);
+    margin:0 0 22px 0;
+  }
+
+  #lock-input{
+    width:100%;
+    box-sizing:border-box;
+    font-family:'Cormorant Garamond', serif;
+    font-size:18px;
+    text-align:center;
+    letter-spacing:2px;
+    padding:12px 14px;
+    border:1px solid var(--gold);
+    border-radius:30px;
+    background:var(--cream);
+    color:var(--ink);
+    outline:none;
+    margin-bottom:14px;
+  }
+
+  #lock-input:focus{
+    border-color:var(--rose-deep);
+  }
+
+  #lock-submit{
+    width:100%;
+    padding:12px 14px;
+    background:var(--rose-deep);
+    color:var(--cream);
+    border:none;
+    border-radius:30px;
+    font-family:'Playfair Display', serif;
+    font-size:15px;
+    letter-spacing:1px;
+    cursor:pointer;
+    transition:background 0.3s ease;
+  }
+
+  #lock-submit:hover{
+    background:var(--gold);
+  }
+
+  #lock-error{
+    margin-top:14px;
+    font-size:13px;
+    color:var(--rose-deep);
+    font-style:italic;
+    min-height:16px;
+  }
 </style>
 </head>
-<body>
+<body class="locked">
+
+<div id="lock-overlay">
+  <div class="lock-card">
+    <div class="lock-heart">♥</div>
+    <h2>Uri &amp; Ro</h2>
+    <p>Introduce la contraseña para entrar</p>
+    <input type="password" id="lock-input" placeholder="Contraseña" autocomplete="off">
+    <button id="lock-submit" type="button" onclick="checkPassword()">Entrar</button>
+    <div id="lock-error"></div>
+  </div>
+</div>
 
 <div class="bg-hearts"></div>
 
@@ -541,6 +649,44 @@
 </footer>
 
 <script>
+  // --- Candado de acceso ---
+  const CORRECT_PASSWORD = "rxo24";
+  const lockOverlay = document.getElementById('lock-overlay');
+  const lockInput = document.getElementById('lock-input');
+  const lockError = document.getElementById('lock-error');
+
+  function unlock(){
+    lockOverlay.classList.add('hidden');
+    document.body.classList.remove('locked');
+    try { localStorage.setItem('uriro_unlocked', 'true'); } catch (e) {}
+  }
+
+  function checkPassword(){
+    const value = (lockInput.value || '').trim().toLowerCase();
+    if (value === CORRECT_PASSWORD) {
+      unlock();
+    } else {
+      lockError.textContent = 'Contraseña incorrecta, inténtalo de nuevo.';
+      lockInput.value = '';
+      lockInput.focus();
+    }
+  }
+
+  (function initLock(){
+    try {
+      if (localStorage.getItem('uriro_unlocked') === 'true') {
+        unlock();
+        return;
+      }
+    } catch (e) {}
+    if (lockInput) {
+      lockInput.addEventListener('keydown', function(e){
+        if (e.key === 'Enter') checkPassword();
+      });
+      setTimeout(() => lockInput.focus(), 300);
+    }
+  })();
+
   // Progressive enhancement: only hide sections (for the fade-in effect)
   // if JS actually runs. If anything fails, content stays visible.
   try {
